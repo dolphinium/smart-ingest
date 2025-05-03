@@ -1,6 +1,6 @@
 # Smart Ingest
 
-[![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
 **Smart Ingest** is a tool designed to intelligently prepare code repositories or local directories for analysis by Large Language Models (LLMs). It enhances the functionality of the `gitingest` library by incorporating Google Gemini to automatically generate relevant `.gitignore`-style exclude patterns. This helps ensure that only meaningful code is included in the output digest, filtering out dependencies, build artifacts, configuration files, and other noise.
 
