@@ -2,13 +2,13 @@
 
 import argparse
 import asyncio
-import os
 import sys
 from pathlib import Path
 from typing import Optional
 
-from gitingest import ingest_async
+sys.path.append(str(Path(__file__).parent))
 
+from gitingest import ingest_async
 from core.directory_analyzer import DirectoryAnalyzer
 from core.gemini_client import GeminiExcludePatternGenerator
 from core.repository_handler import RepositoryHandler
