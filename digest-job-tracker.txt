@@ -1,0 +1,3604 @@
+Directory structure:
+└── smart_ingest_clone_44lqsavi/
+    ├── README.md
+    ├── Dockerfile
+    ├── docker-compose.yml
+    ├── requirements.txt
+    ├── app/
+    │   ├── __init__.py
+    │   ├── config.py
+    │   ├── main.py
+    │   ├── api/
+    │   │   ├── __init__.py
+    │   │   ├── applications.py
+    │   │   └── auth.py
+    │   ├── models/
+    │   │   ├── __init__.py
+    │   │   ├── application.py
+    │   │   ├── database.py
+    │   │   └── user.py
+    │   ├── services/
+    │   │   ├── __init__.py
+    │   │   └── linkedin_crawler.py
+    │   └── utils/
+    │       ├── __init__.py
+    │       └── security.py
+    ├── job-tracker-frontend/
+    │   ├── README.md
+    │   ├── babel.config.js
+    │   ├── jsconfig.json
+    │   ├── package.json
+    │   ├── vue.config.js
+    │   ├── .browserslistrc
+    │   ├── .eslintrc.js
+    │   ├── .gitignore
+    │   ├── public/
+    │   │   └── index.html
+    │   └── src/
+    │       ├── App.vue
+    │       ├── main.js
+    │       ├── assets/
+    │       ├── components/
+    │       │   └── HelloWorld.vue
+    │       ├── layouts/
+    │       │   └── MainLayout.vue
+    │       ├── plugins/
+    │       │   ├── vuetify.js
+    │       │   └── webfontloader.js
+    │       ├── router/
+    │       │   └── index.js
+    │       ├── services/
+    │       │   └── api.js
+    │       ├── store/
+    │       │   ├── index.js
+    │       │   └── modules/
+    │       │       ├── applications.js
+    │       │       └── auth.js
+    │       └── views/
+    │           ├── AboutView.vue
+    │           ├── ApplicationFormView.vue
+    │           ├── ApplicationListView.vue
+    │           ├── DashboardView.vue
+    │           ├── HomeView.vue
+    │           ├── LoginView.vue
+    │           └── RegisterView.vue
+    └── tests/
+        └── test_auth.py
+
+================================================
+File: README.md
+================================================
+# Job Tracker
+
+Job Tracker is a full-stack web application designed to help users manage and track their job applications. It features a FastAPI backend, a Vue.js frontend with Vuetify, and uses MongoDB for data storage. A key feature is its ability to automatically scrape job details from LinkedIn URLs.
+
+## Features
+
+*   **User Authentication:** Secure user registration and login using JWT.
+*   **Application Management:** Create, Read, Update, and Delete (CRUD) job applications.
+*   **LinkedIn Integration:** Automatically fetches job details (Title, Company, Location, Description, Date Posted) from a provided LinkedIn job URL using a web crawler.
+*   **Status Tracking:** Track the status of each application (Wishlist, Applied, Interview, Offer, etc.) with a history log.
+*   **Notes & Details:** Add personal notes and store relevant application details.
+*   **Responsive UI:** A clean user interface built with Vue.js and Vuetify 3.
+*   **Dashboard:** Provides a quick overview of application statistics (Total, Active, Interview Stage) and recent activity.
+*   **Containerized:** Easily run the backend and database using Docker Compose.
+
+## Tech Stack
+
+*   **Backend:**
+    *   Python 3.11
+    *   FastAPI
+    *   Motor (Async MongoDB Driver)
+    *   Pydantic (Data Validation)
+    *   Passlib, python-jose (Authentication & Security)
+    *   BeautifulSoup4, Requests (LinkedIn Crawler)
+    *   Uvicorn (ASGI Server)
+*   **Frontend:**
+    *   Vue.js 3
+    *   Vue Router 4
+    *   Vuex 4 (State Management)
+    *   Vuetify 3 (UI Component Library)
+    *   Axios (HTTP Client)
+*   **Database:** MongoDB
+*   **Containerization:** Docker, Docker Compose
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+*   [Docker](https://www.docker.com/get-started)
+*   [Docker Compose](https://docs.docker.com/compose/install/) (Usually included with Docker Desktop)
+*   [Node.js](https://nodejs.org/) (v16 or later recommended) and [npm](https://www.npmjs.com/) (usually included with Node.js) - *Required for frontend development*
+
+## Getting Started
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/dolphinium/job-tracker.git
+    cd dolphinium-job-tracker
+    ```
+
+2.  **Configure Environment Variables (Optional but Recommended):**
+    The backend uses environment variables defined in `docker-compose.yml` for development. For production or more complex setups, consider creating a `.env` file in the project root:
+    ```dotenv
+    # .env
+    MONGODB_URL=mongodb://mongodb:27017
+    DATABASE_NAME=job_tracker_prod # Or keep as job_tracker
+    SECRET_KEY=generate-a-strong-random-secret-key # CHANGE THIS!
+    ACCESS_TOKEN_EXPIRE_MINUTES=43200 # e.g., 30 days
+    ```
+    *Note: The `docker-compose.yml` file currently sets these for the `api` service directly. Using a `.env` file requires adjusting `docker-compose.yml` to load it.*
+
+3.  **Build and Run Backend Services (API & MongoDB):**
+    From the project root directory :
+    ```bash
+    docker-compose up -d --build
+    ```
+    This command will:
+    *   Build the Docker image for the FastAPI application (`api` service).
+    *   Pull the official MongoDB image (`mongodb` service).
+    *   Create and start the containers in detached mode (`-d`).
+    *   Set up a shared network for the services.
+    *   Create a volume (`mongodb_data`) to persist database data.
+
+4.  **Install Frontend Dependencies:**
+    Navigate to the frontend directory and install the required Node.js packages:
+    ```bash
+    cd job-tracker-frontend
+    npm install
+    ```
+
+## Running the Application
+
+1.  **Backend:** The backend API and database should already be running via `docker-compose up -d` (from the Getting Started steps).
+    *   API Base URL: `http://localhost:8000`
+    *   API Docs (Swagger UI): `http://localhost:8000/docs`
+    *   Health Check: `http://localhost:8000/health`
+
+2.  **Frontend:**
+    Navigate to the frontend directory and start the Vue development server:
+    ```bash
+    cd job-tracker-frontend
+    npm run serve
+    ```
+    The frontend application will be accessible at `http://localhost:8080` (or another port if 8080 is busy - check the terminal output).
+
+## Running Tests
+
+Tests are located in the `tests/` directory. To run the backend tests (currently limited), execute the following command from the project root directory after starting the services with `docker-compose up`:
+
+```bash
+docker-compose exec api pytest
+```
+*Note: Ensure `pytest` and `httpx` are listed in `requirements.txt` (which they are).*
+
+## Project Structure
+
+```
+└── dolphinium-job-tracker/
+    ├── README.md             # This file
+    ├── docker-compose.yml    # Docker Compose configuration for backend services
+    ├── Dockerfile            # Docker configuration for the FastAPI backend
+    ├── requirements.txt      # Python dependencies for the backend
+    ├── app/                  # Backend FastAPI application source code
+    │   ├── __init__.py
+    │   ├── config.py         # Application settings
+    │   ├── main.py           # FastAPI app entry point
+    │   ├── api/              # API endpoint definitions (routers)
+    │   ├── models/           # Pydantic models and database setup
+    │   ├── services/         # Business logic (e.g., LinkedIn crawler)
+    │   └── utils/            # Utility functions (e.g., security)
+    ├── job-tracker-frontend/ # Frontend Vue.js application source code
+    │   ├── README.md         # Frontend specific README
+    │   ├── package.json      # Node.js dependencies and scripts
+    │   ├── vue.config.js     # Vue CLI configuration
+    │   ├── public/           # Static assets and index.html template
+    │   └── src/              # Frontend source code (components, views, store, etc.)
+    └── tests/                # Backend tests
+        └── test_auth.py
+```
+
+## Important Notes
+
+*   **LinkedIn Crawler:** Web scraping is inherently fragile. LinkedIn frequently updates its website structure, which can break the crawler (`app/services/linkedin_crawler.py`). The selectors used might need adjustments over time. Using this feature should comply with LinkedIn's Terms of Service. Excessive scraping can lead to IP blocks.
+*   **Security:** The default `SECRET_KEY` in `docker-compose.yml` is **not secure** for production. Always generate and use a strong, unique secret key in a production environment, preferably loaded from environment variables or a secrets management system.
+
+
+
+
+================================================
+File: Dockerfile
+================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+
+================================================
+File: docker-compose.yml
+================================================
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=job_tracker
+      - SECRET_KEY=development-secret-key
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
+
+
+================================================
+File: requirements.txt
+================================================
+fastapi
+uvicorn[standard]
+motor
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+requests
+beautifulsoup4
+python-dotenv
+pytest
+httpx
+pydantic-settings
+pydantic[email]
+
+
+
+================================================
+File: app/__init__.py
+================================================
+
+
+
+================================================
+File: app/config.py
+================================================
+import os
+from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "Job Tracker API"
+    API_V1_STR: str = "/api/v1"
+    
+    # MongoDB settings
+    MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "job_tracker")
+    
+    # Authentication
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-for-development")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 1 week
+
+settings = Settings()
+
+
+================================================
+File: app/main.py
+================================================
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+from app.models.database import connect_to_mongodb, close_mongodb_connection
+from app.api import auth, applications
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+)
+
+# Set up CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],  # Vue dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.on_event("startup")
+async def startup():
+    await connect_to_mongodb()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await close_mongodb_connection()
+
+# Include API routes
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
+app.include_router(applications.router, prefix=f"{settings.API_V1_STR}/applications", tags=["applications"])
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to Job Tracker API"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
+================================================
+File: app/api/__init__.py
+================================================
+
+
+
+================================================
+File: app/api/applications.py
+================================================
+from typing import List, Any
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, status
+from bson.objectid import ObjectId
+
+from app.models.database import get_database
+from app.models.application import Application, ApplicationCreate, ApplicationUpdate, ApplicationInDB, StatusHistory
+from app.api.auth import get_current_user
+from app.models.user import User
+from app.services.linkedin_crawler import LinkedInCrawler
+
+router = APIRouter()
+linkedin_crawler = LinkedInCrawler()
+
+@router.post("/", response_model=Application)
+async def create_application(
+    application_in: ApplicationCreate,
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    db = get_database()
+    
+    # Log the creation attempt
+    print(f"Attempting to create application for URL: {application_in.linkedin_url}")
+    
+    # Extract job details from LinkedIn
+    job_details = await linkedin_crawler.get_job_details(str(application_in.linkedin_url))
+    
+    # Combine provided data with crawled data
+    application_data = {**application_in.dict(), **job_details}
+    
+    # Create application object
+    application = ApplicationInDB(
+        **application_data,
+        user_id=ObjectId(current_user.id),
+        status_history=[
+            StatusHistory(
+                status=application_data.get("status", "Wishlist"),
+                notes="Application created"
+            )
+        ]
+    )
+    
+    # Use the new method that properly handles HttpUrl
+    result = await db.applications.insert_one(application.dict_for_mongodb())
+    
+    print(f"Application created with ID: {result.inserted_id}")
+    
+    created_app = await db.applications.find_one({"_id": result.inserted_id})
+    return _map_application_to_response(created_app)
+
+@router.get("/", response_model=List[Application])
+async def list_applications(
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    db = get_database()
+    
+    cursor = db.applications.find({"user_id": ObjectId(current_user.id)})
+    applications = await cursor.to_list(length=100)  # Limit to 100 for now
+    
+    return [_map_application_to_response(app) for app in applications]
+
+@router.get("/{application_id}", response_model=Application)
+async def get_application(
+    application_id: str,
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    db = get_database()
+    
+    application = await db.applications.find_one({
+        "_id": ObjectId(application_id),
+        "user_id": ObjectId(current_user.id)
+    })
+    
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found"
+        )
+    
+    return _map_application_to_response(application)
+
+@router.put("/{application_id}", response_model=Application)
+async def update_application(
+    application_id: str,
+    application_update: ApplicationUpdate,
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    db = get_database()
+    
+    # Get existing application
+    existing_app = await db.applications.find_one({
+        "_id": ObjectId(application_id),
+        "user_id": ObjectId(current_user.id)
+    })
+    
+    if not existing_app:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found"
+        )
+    
+    # Prepare update data
+    update_data = {k: v for k, v in application_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    # Add to status history if status changed
+    if "status" in update_data and update_data["status"] != existing_app["status"]:
+        status_history_entry = StatusHistory(
+            status=update_data["status"],
+            notes=f"Status changed from {existing_app['status']} to {update_data['status']}"
+        )
+        
+        # Use $push to add to status_history array
+        await db.applications.update_one(
+            {"_id": ObjectId(application_id)},
+            {"$push": {"status_history": status_history_entry.dict()}}
+        )
+    
+    # Update application
+    await db.applications.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$set": update_data}
+    )
+    
+    # Get updated application
+    updated_app = await db.applications.find_one({"_id": ObjectId(application_id)})
+    return _map_application_to_response(updated_app)
+
+@router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_application(
+    application_id: str,
+    current_user: User = Depends(get_current_user)
+) -> None:
+    db = get_database()
+    
+    # Check application exists and belongs to user
+    existing_app = await db.applications.find_one({
+        "_id": ObjectId(application_id),
+        "user_id": ObjectId(current_user.id)
+    })
+    
+    if not existing_app:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found"
+        )
+    
+    # Delete application
+    await db.applications.delete_one({"_id": ObjectId(application_id)})
+
+def _map_application_to_response(app_dict: dict) -> Application:
+    """Map MongoDB document to Pydantic model for response."""
+    app_dict["id"] = str(app_dict["_id"])
+    app_dict["user_id"] = str(app_dict["user_id"])
+    return Application(**app_dict)
+
+
+================================================
+File: app/api/auth.py
+================================================
+from datetime import timedelta
+from typing import Any
+from bson.objectid import ObjectId
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+from pydantic import BaseModel
+
+from app.config import settings
+from app.models.database import get_database
+from app.models.user import User, UserCreate, UserInDB
+from app.utils.security import verify_password, get_password_hash, create_access_token
+
+router = APIRouter()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenPayload(BaseModel):
+    sub: str = None
+
+async def get_user_by_email(email: str) -> UserInDB:
+    db = get_database()
+    user_data = await db.users.find_one({"email": email})
+    if user_data:
+        return UserInDB(**user_data)
+    return None
+
+async def authenticate_user(email: str, password: str) -> UserInDB:
+    user = await get_user_by_email(email)
+    if not user:
+        return None
+    if not verify_password(password, user.password_hash):
+        return None
+    return user
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    db = get_database()
+    user_data = await db.users.find_one({"_id": ObjectId(user_id)})
+    if user_data is None:
+        raise credentials_exception
+    
+    user = UserInDB(**user_data)
+    return User(
+        id=str(user.id),
+        username=user.username,
+        email=user.email,
+        created_at=user.created_at
+    )
+
+@router.post("/register", response_model=User)
+async def register_user(user_in: UserCreate) -> Any:
+    db = get_database()
+    
+    # Check if email already exists
+    existing_user = await db.users.find_one({"email": user_in.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Check if username already exists
+    existing_username = await db.users.find_one({"username": user_in.username})
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already taken"
+        )
+    
+    # Create new user
+    user_data = UserInDB(
+        **user_in.dict(),
+        password_hash=get_password_hash(user_in.password)
+    )
+    
+    result = await db.users.insert_one(user_data.dict(by_alias=True))
+    
+    created_user = await db.users.find_one({"_id": result.inserted_id})
+    return User(
+        id=str(created_user["_id"]),
+        username=created_user["username"],
+        email=created_user["email"],
+        created_at=created_user["created_at"]
+    )
+
+@router.post("/login", response_model=Token)
+async def login_access_token(form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
+    user = await authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/me", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_user)) -> Any:
+    return current_user
+
+
+================================================
+File: app/models/__init__.py
+================================================
+
+
+
+================================================
+File: app/models/application.py
+================================================
+from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel, Field, HttpUrl
+from bson import ObjectId
+from app.models.user import PyObjectId # Assuming PyObjectId is defined in user.py
+
+
+class StatusHistory(BaseModel):
+    status: str
+    changed_at: datetime = Field(default_factory=datetime.utcnow)
+    notes: Optional[str] = None
+
+class Document(BaseModel):
+    name: str
+    type: str  # "Resume", "Cover Letter"
+    content: str # Consider if storing full content here is wise, maybe path?
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Contact(BaseModel):
+    name: str
+    position: Optional[str] = None
+    email: Optional[str] = None
+    notes: Optional[str] = None
+
+class ApplicationBase(BaseModel):
+    linkedin_url: HttpUrl
+    title: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = None
+    job_description: Optional[str] = None
+    date_posted: Optional[datetime] = None
+    applied_date: Optional[datetime] = None
+    status: str = "Wishlist"
+    notes: Optional[str] = None
+
+class ApplicationCreate(ApplicationBase):
+    # user_id: PyObjectId # Add user_id here if needed on creation
+    pass
+
+class ApplicationUpdate(BaseModel):
+    title: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = None
+    job_description: Optional[str] = None
+    date_posted: Optional[datetime] = None
+    applied_date: Optional[datetime] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    # You might want to add fields here to update status_history, documents, contacts
+
+class ApplicationInDB(ApplicationBase):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    user_id: PyObjectId
+    linkedin_job_id: Optional[str] = None
+    status_history: List[StatusHistory] = []
+    documents: List[Document] = []
+    contacts: List[Contact] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str,
+            PyObjectId: str
+        }
+    
+    # Add this method to convert to MongoDB-compatible dict
+    def dict_for_mongodb(self):
+        """Convert the model to a MongoDB-compatible dict"""
+        data = self.dict(by_alias=True)
+        
+        # Convert HttpUrl to string
+        if 'linkedin_url' in data and hasattr(data['linkedin_url'], '__str__'):
+            data['linkedin_url'] = str(data['linkedin_url'])
+        
+        return data
+
+class Application(ApplicationBase):
+    id: str # Expose ID as string
+    user_id: str # Expose user_id as string
+    linkedin_job_id: Optional[str] = None
+    status_history: List[StatusHistory] = []
+    documents: List[Document] = []
+    contacts: List[Contact] = []
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True # UPDATED from orm_mode
+
+
+================================================
+File: app/models/database.py
+================================================
+from motor.motor_asyncio import AsyncIOMotorClient
+from app.config import settings
+
+class Database:
+    client: AsyncIOMotorClient = None
+    
+db = Database()
+
+async def connect_to_mongodb():
+    db.client = AsyncIOMotorClient(settings.MONGODB_URL)
+    print("Connected to MongoDB")
+
+async def close_mongodb_connection():
+    if db.client:
+        db.client.close()
+        print("Closed MongoDB connection")
+
+def get_database():
+    return db.client[settings.DATABASE_NAME]
+
+
+================================================
+File: app/models/user.py
+================================================
+from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
+from bson import ObjectId
+from typing import Any
+from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
+
+class PyObjectId(ObjectId):
+    """Custom type for handling MongoDB ObjectIDs properly in Pydantic v2"""
+    
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """Define how to validate and serialize this type"""
+        return core_schema.union_schema([
+            # Try to validate as ObjectId directly
+            core_schema.is_instance_schema(ObjectId),
+            # If not, try to convert string to ObjectId
+            core_schema.chain_schema([
+                core_schema.str_schema(),
+                core_schema.no_info_plain_validator_function(cls.validate)
+            ])
+        ])
+    
+    @classmethod
+    def validate(cls, value):
+        """Convert string to ObjectId if possible"""
+        if not ObjectId.is_valid(value):
+            raise ValueError(f"Invalid ObjectId: {value}")
+        return ObjectId(value)
+    
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, _schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        """Custom JSON schema generation for this type"""
+        return handler.resolve_ref_schema(core_schema.str_schema())
+
+class UserBase(BaseModel):
+    username: str
+    email: EmailStr
+
+class UserCreate(UserBase):
+    password: str
+
+class UserInDB(UserBase):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    password_hash: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    model_config = {
+        "populate_by_name": True,
+        "arbitrary_types_allowed": True,
+        "json_encoders": {
+            ObjectId: str
+        }
+    }
+
+class User(UserBase):
+    id: str # This should be string when exposing via API
+    created_at: datetime
+
+    class Config:
+        from_attributes = True # UPDATED from orm_mode
+
+
+================================================
+File: app/services/__init__.py
+================================================
+
+
+
+================================================
+File: app/services/linkedin_crawler.py
+================================================
+# Updated app/services/linkedin_crawler.py
+import re
+import requests
+from bs4 import BeautifulSoup, NavigableString, Tag
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
+import logging
+
+# --- Helper function to parse relative dates ---
+def parse_relative_date(date_str: str) -> Optional[datetime]:
+    """Parses relative date strings like '2 days ago', '1 week ago'."""
+    now = datetime.utcnow()
+    date_str = date_str.lower().strip()
+
+    try:
+        if "just now" in date_str or "moments ago" in date_str:
+            return now
+        elif "minute" in date_str:
+            minutes = int(re.search(r'\d+', date_str).group())
+            return now - timedelta(minutes=minutes)
+        elif "hour" in date_str:
+            hours = int(re.search(r'\d+', date_str).group())
+            return now - timedelta(hours=hours)
+        elif "day" in date_str:
+            days = int(re.search(r'\d+', date_str).group())
+            return now - timedelta(days=days)
+        elif "week" in date_str:
+            weeks = int(re.search(r'\d+', date_str).group())
+            return now - timedelta(weeks=weeks)
+        elif "month" in date_str:
+            months = int(re.search(r'\d+', date_str).group())
+            # Approximate month as 30 days
+            return now - timedelta(days=months * 30)
+        elif "year" in date_str:
+            years = int(re.search(r'\d+', date_str).group())
+            # Approximate year as 365 days
+            return now - timedelta(days=years * 365)
+        else:
+            # Attempt to parse as a fixed date if possible (less common on LinkedIn)
+            # This part might need refinement based on actual date formats encountered
+            return datetime.strptime(date_str, "%Y-%m-%d") # Example format
+    except Exception:
+        # If parsing fails, return None
+        return None
+# -------------------------------------------------
+
+class LinkedInCrawler:
+    def __init__(self):
+        self.headers = {
+            # Using a realistic User-Agent is important
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            # Add other headers that might help mimic a real browser visit
+            'Sec-Ch-Ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'same-origin', # Or 'none' if coming from external site
+            'Upgrade-Insecure-Requests': '1',
+        }
+        self.logger = logging.getLogger("linkedin_crawler")
+        logging.basicConfig(level=logging.INFO) # Basic logging config
+
+    def extract_job_id(self, url: str) -> Optional[str]:
+        """Extract LinkedIn job ID from URL."""
+        # More robust regex to handle different URL formats
+        match = re.search(r'(?:jobs/view/|currentJobId=)(\d+)', url)
+        if match:
+            return match.group(1)
+        self.logger.warning(f"Could not extract job ID from URL: {url}")
+        return None
+
+    def get_element_text(self, soup: BeautifulSoup, selector: str, attribute: Optional[str] = None) -> Optional[str]:
+        """Safely find an element and return its text or attribute."""
+        try:
+            element = soup.select_one(selector)
+            if element:
+                if attribute:
+                    return element.get(attribute, '').strip()
+                # Handle cases where text might be split across multiple tags (e.g., within spans)
+                text_parts = [part.strip() for part in element.stripped_strings]
+                return ' '.join(text_parts) if text_parts else None
+        except Exception as e:
+            self.logger.error(f"Error extracting text with selector '{selector}': {e}")
+        return None
+
+    def get_job_description_text(self, soup: BeautifulSoup, selector: str) -> Optional[str]:
+        """Safely find the job description element and extract formatted text."""
+        try:
+            description_div = soup.select_one(selector)
+            if not description_div:
+                return None
+
+            # Attempt to preserve some formatting (paragraphs, lists)
+            content = []
+            for element in description_div.children:
+                if isinstance(element, NavigableString):
+                    text = element.strip()
+                    if text:
+                        content.append(text)
+                elif isinstance(element, Tag):
+                    # Avoid extracting text from known 'show more/less' button containers if element removal wasn't used
+                    # (Add class names/tags here if you identify them and didn't use decompose)
+                    # if 'some-show-more-class' in element.get('class', []):
+                    #    continue
+
+                    if element.name == 'ul':
+                        items = ["- " + li.get_text(strip=True) for li in element.find_all('li')]
+                        if items: # Only add if list has items
+                           content.append("\n" + "\n".join(items)) # Add newline before list
+                    elif element.name in ['p', 'div']:
+                        # Get text, ensuring spaces between inline elements are somewhat preserved
+                        text = element.get_text(separator=' ', strip=True)
+                        if text:
+                           content.append(text + "\n") # Add newline after paragraphs/divs
+                    elif element.name == 'br':
+                         # Add a newline for <br>, but only if the last element wasn't already adding one
+                        if content and not content[-1].endswith('\n'):
+                            content.append('\n')
+                    elif element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                        text = element.get_text(strip=True)
+                        if text:
+                           content.append("\n" + text + "\n") # Add spacing around headers
+                    else:
+                         # For other inline tags like <strong>, <em>, <a> etc. get text directly
+                        text = element.get_text(strip=True)
+                        if text:
+                            content.append(text)
+
+
+            # --- Post-processing to remove unwanted trailing text ---
+            full_description = "\n".join(content).strip()
+
+            # Define common trailing texts to remove (case-insensitive check)
+            suffixes_to_remove = ["Show moreShow less", "Show less", "Show more"]
+
+            cleaned_description = full_description
+            lower_description = cleaned_description.lower() # Check against lowercase
+
+            for suffix in suffixes_to_remove:
+                if lower_description.endswith(suffix.lower()):
+                    # Remove the suffix, preserving original case as much as possible
+                    # Slice the original string based on the length of the found suffix
+                    cleaned_description = cleaned_description[:-len(suffix)].strip()
+                    lower_description = cleaned_description.lower() # Update for next check if needed
+
+            self.logger.debug(f"Original Description length: {len(full_description)}, Cleaned Description length: {len(cleaned_description)}")
+            return cleaned_description if cleaned_description else None # Return None if empty after cleaning
+
+        except Exception as e:
+            self.logger.error(f"Error extracting job description with selector '{selector}': {e}", exc_info=True)
+        return None
+
+    async def get_job_details(self, url: str) -> Dict[str, Any]:
+        """
+        Crawl LinkedIn job page and extract relevant information.
+        NOTE: This uses synchronous 'requests'. For high-concurrency applications,
+        consider using an async HTTP client like 'httpx' or running this
+        in a separate thread pool executor (e.g., FastAPI's run_in_executor).
+        """
+        job_id = self.extract_job_id(url)
+        details = {
+            "linkedin_job_id": job_id,
+            "linkedin_url": url,
+            "title": None,
+            "company": None,
+            "location": None,
+            "job_description": None,
+            "date_posted": None,
+            # Add more fields if needed later
+            # "company_url": None,
+            # "seniority_level": None,
+            # "employment_type": None,
+            # "job_function": None,
+            # "industries": None,
+        }
+
+        try:
+            self.logger.info(f"Attempting to crawl LinkedIn job at: {url}")
+            # Add a small delay to be polite
+            # time.sleep(random.uniform(1, 3)) # Consider adding random delays
+
+            # --- Perform the HTTP GET request ---
+            # Using a session object can potentially handle cookies if needed later
+            session = requests.Session()
+            session.headers.update(self.headers)
+            response = session.get(url, timeout=15) # Add a timeout
+            response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+
+            self.logger.info(f"Successfully fetched URL: {url}. Status code: {response.status_code}")
+
+            # --- Parse the HTML content ---
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # --- Extract Job Details ---
+            # NOTE: These selectors are based on common LinkedIn structures (as of late 2023/early 2024)
+            # AND ARE LIKELY TO CHANGE. They require inspection and adjustment.
+
+            # Title: Often in an <h1> tag within the top card
+            details["title"] = self.get_element_text(soup, 'h1.top-card-layout__title, h1.job-title, .job-details-jobs-unified-top-card__job-title')
+
+            # Company Name: Often a link within the top card or a specific span
+            details["company"] = self.get_element_text(soup, 'a.topcard__org-name-link, span.job-details-jobs-unified-top-card__company-name, .topcard__flavor a')
+            if not details["company"]: # Fallback selector
+                 details["company"] = self.get_element_text(soup, '.job-card-container__company-name, .job-details-jobs-unified-top-card__primary-description-without-tagline a')
+
+
+            # Location: Often a span within the top card
+            details["location"] = self.get_element_text(soup, 'span.topcard__flavor--bullet, span.job-details-jobs-unified-top-card__bullet, .job-details-jobs-unified-top-card__primary-description-without-tagline span:first-of-type') # Take the first span if multiple
+
+            # Job Description: Usually within a specific div
+            # Look for common description container classes
+            details["job_description"] = self.get_job_description_text(soup, 'div.description__text--rich, div.show-more-less-html__markup, .jobs-description-content__text')
+
+            # Date Posted: Often relative time in a span
+            date_str = self.get_element_text(soup, 'span.posted-time-ago__text, span.job-details-jobs-unified-top-card__posted-date')
+            if date_str:
+                details["date_posted"] = parse_relative_date(date_str)
+                self.logger.info(f"Parsed relative date string '{date_str}' to {details['date_posted']}")
+            else:
+                 self.logger.warning(f"Could not find date posted element for {url}")
+
+
+            # --- Log extracted details ---
+            self.logger.info(f"Extracted details for {url}:")
+            for key, value in details.items():
+                 # Log shorter version of description
+                 if key == "job_description" and value:
+                     self.logger.info(f"  {key}: {value[:100]}...")
+                 else:
+                     self.logger.info(f"  {key}: {value}")
+
+            return details
+
+        except requests.exceptions.HTTPError as http_err:
+            self.logger.error(f"HTTP error occurred while scraping {url}: {http_err} - Status Code: {http_err.response.status_code}")
+            # You might want specific handling for 404 (Not Found) vs 429 (Too Many Requests) etc.
+        except requests.exceptions.ConnectionError as conn_err:
+            self.logger.error(f"Connection error occurred while scraping {url}: {conn_err}")
+        except requests.exceptions.Timeout as timeout_err:
+            self.logger.error(f"Timeout error occurred while scraping {url}: {timeout_err}")
+        except requests.exceptions.RequestException as req_err:
+            self.logger.error(f"An ambiguous request error occurred while scraping {url}: {req_err}")
+        except Exception as e:
+            # Catch any other unexpected errors during scraping/parsing
+            self.logger.error(f"An unexpected error occurred scraping LinkedIn job {url}: {str(e)}", exc_info=True) # Include stack trace
+
+        # Return the partially filled or empty details dictionary in case of errors
+        # Ensures the API endpoint still gets a dictionary back, even if scraping fails.
+        return details
+
+
+================================================
+File: app/utils/__init__.py
+================================================
+
+
+
+================================================
+File: app/utils/security.py
+================================================
+from datetime import datetime, timedelta
+from typing import Optional
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from app.config import settings
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+================================================
+File: job-tracker-frontend/README.md
+================================================
+# job-tracker-frontend
+
+## Project setup
+```
+npm install
+```
+
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+```
+npm run build
+```
+
+### Lints and fixes files
+```
+npm run lint
+```
+
+### Customize configuration
+See [Configuration Reference](https://cli.vuejs.org/config/).
+
+
+
+================================================
+File: job-tracker-frontend/babel.config.js
+================================================
+module.exports = {
+  presets: ["@vue/cli-plugin-babel/preset"],
+};
+
+
+
+================================================
+File: job-tracker-frontend/jsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "esnext",
+    "baseUrl": "./",
+    "moduleResolution": "node",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ]
+  }
+}
+
+
+
+================================================
+File: job-tracker-frontend/package.json
+================================================
+{
+  "name": "job-tracker-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@mdi/font": "5.9.55",
+    "axios": "^1.9.0",
+    "core-js": "^3.8.3",
+    "roboto-fontface": "*",
+    "vue": "^3.2.13",
+    "vue-router": "^4.0.3",
+    "vuetify": "^3.0.0-beta.0",
+    "vuex": "^4.0.0",
+    "webfontloader": "^1.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-vuex": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "prettier": "^2.4.1",
+    "sass": "^1.32.7",
+    "sass-loader": "^12.0.0",
+    "vue-cli-plugin-vuetify": "~2.5.8",
+    "webpack-plugin-vuetify": "^3.1.1"
+  }
+}
+
+
+
+================================================
+File: job-tracker-frontend/vue.config.js
+================================================
+const { defineConfig } = require("@vue/cli-service");
+module.exports = defineConfig({
+  transpileDependencies: true,
+
+  pluginOptions: {
+    vuetify: {
+      // https://github.com/vuetifyjs/vuetify-loader/tree/next/packages/vuetify-loader
+    },
+  },
+});
+
+
+
+================================================
+File: job-tracker-frontend/.browserslistrc
+================================================
+> 1%
+last 2 versions
+not dead
+not ie 11
+
+
+
+================================================
+File: job-tracker-frontend/.eslintrc.js
+================================================
+module.exports = {
+  root: true,
+  env: {
+    node: true,
+  },
+  extends: [
+    "plugin:vue/vue3-essential",
+    "eslint:recommended",
+    "plugin:prettier/recommended",
+  ],
+  parserOptions: {
+    parser: "@babel/eslint-parser",
+  },
+  rules: {
+    "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
+    "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
+  },
+};
+
+
+
+================================================
+File: job-tracker-frontend/.gitignore
+================================================
+.DS_Store
+node_modules
+/dist
+
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+
+================================================
+File: job-tracker-frontend/public/index.html
+================================================
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <title><%= htmlWebpackPlugin.options.title %></title>
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+  </body>
+</html>
+
+
+
+================================================
+File: job-tracker-frontend/src/App.vue
+================================================
+<template>
+  <v-app>
+    <v-main>
+      <router-view />
+    </v-main>
+  </v-app>
+</template>
+
+<script>
+export default {
+  name: "App",
+
+  data: () => ({
+    //
+  }),
+};
+</script>
+
+
+
+================================================
+File: job-tracker-frontend/src/main.js
+================================================
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
+import store from "./store";
+import vuetify from "./plugins/vuetify";
+import { loadFonts } from "./plugins/webfontloader";
+
+loadFonts();
+
+createApp(App).use(router).use(store).use(vuetify).mount("#app");
+
+
+
+
+================================================
+File: job-tracker-frontend/src/components/HelloWorld.vue
+================================================
+<template>
+  <v-container>
+    <v-row class="text-center">
+      <v-col cols="12">
+        <v-img
+          :src="require('../assets/logo.svg')"
+          class="my-3"
+          contain
+          height="200"
+        />
+      </v-col>
+
+      <v-col class="mb-4">
+        <h1 class="display-2 font-weight-bold mb-3">
+          Welcome to the Vuetify 3 Beta
+        </h1>
+
+        <p class="subheading font-weight-regular">
+          For help and collaboration with other Vuetify developers,
+          <br />please join our online
+          <a href="https://community.vuetifyjs.com" target="_blank"
+            >Discord Community</a
+          >
+        </p>
+      </v-col>
+
+      <v-col class="mb-5" cols="12">
+        <h2 class="headline font-weight-bold mb-5">What's next?</h2>
+
+        <v-row justify="center">
+          <a
+            v-for="(next, i) in whatsNext"
+            :key="i"
+            :href="next.href"
+            class="subheading mx-3"
+            target="_blank"
+          >
+            {{ next.text }}
+          </a>
+        </v-row>
+      </v-col>
+
+      <v-col class="mb-5" cols="12">
+        <h2 class="headline font-weight-bold mb-5">Important Links</h2>
+
+        <v-row justify="center">
+          <a
+            v-for="(link, i) in importantLinks"
+            :key="i"
+            :href="link.href"
+            class="subheading mx-3"
+            target="_blank"
+          >
+            {{ link.text }}
+          </a>
+        </v-row>
+      </v-col>
+
+      <v-col class="mb-5" cols="12">
+        <h2 class="headline font-weight-bold mb-5">Ecosystem</h2>
+
+        <v-row justify="center">
+          <a
+            v-for="(eco, i) in ecosystem"
+            :key="i"
+            :href="eco.href"
+            class="subheading mx-3"
+            target="_blank"
+          >
+            {{ eco.text }}
+          </a>
+        </v-row>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+export default {
+  name: "HelloWorld",
+
+  data: () => ({
+    ecosystem: [
+      {
+        text: "vuetify-loader",
+        href: "https://github.com/vuetifyjs/vuetify-loader/tree/next",
+      },
+      {
+        text: "github",
+        href: "https://github.com/vuetifyjs/vuetify/tree/next",
+      },
+      {
+        text: "awesome-vuetify",
+        href: "https://github.com/vuetifyjs/awesome-vuetify",
+      },
+    ],
+    importantLinks: [
+      {
+        text: "Chat",
+        href: "https://community.vuetifyjs.com",
+      },
+      {
+        text: "Made with Vuetify",
+        href: "https://madewithvuejs.com/vuetify",
+      },
+      {
+        text: "Twitter",
+        href: "https://twitter.com/vuetifyjs",
+      },
+      {
+        text: "Articles",
+        href: "https://medium.com/vuetify",
+      },
+    ],
+    whatsNext: [
+      {
+        text: "Explore components",
+        href: "https://vuetifyjs.com",
+      },
+      {
+        text: "Roadmap",
+        href: "https://vuetifyjs.com/introduction/roadmap/",
+      },
+      {
+        text: "Frequently Asked Questions",
+        href: "https://vuetifyjs.com/getting-started/frequently-asked-questions",
+      },
+    ],
+  }),
+};
+</script>
+
+
+
+================================================
+File: job-tracker-frontend/src/layouts/MainLayout.vue
+================================================
+// job-tracker-frontend/src/layouts/MainLayout.vue
+<template>
+  <v-app>
+    <!-- Use flat or low elevation for a cleaner look -->
+    <v-app-bar app color="white" flat border>
+      <!-- Changed color, added flat & border -->
+      <v-app-bar-nav-icon
+        @click="drawer = !drawer"
+        color="grey-darken-1"
+      ></v-app-bar-nav-icon>
+      <v-toolbar-title class="font-weight-medium text-grey-darken-3">
+        <!-- Adjusted font weight/color -->
+        Job Application Tracker
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <!-- Add tooltip for clarity -->
+      <v-tooltip location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-if="isAuthenticated"
+            icon
+            @click="logout"
+            v-bind="props"
+            color="grey-darken-1"
+          >
+            <v-icon>mdi-logout-variant</v-icon>
+            <!-- Slightly different icon -->
+          </v-btn>
+        </template>
+        <span>Logout</span>
+      </v-tooltip>
+    </v-app-bar>
+
+    <v-navigation-drawer v-model="drawer" app>
+      <!-- Optional: User Info -->
+      <v-list-item
+        v-if="user"
+        :title="user.username"
+        :subtitle="user.email"
+        class="pa-3"
+      >
+        <template v-slot:prepend>
+          <v-avatar color="primary" size="small" class="mr-3">
+            <span class="white--text text-h6">{{
+              user.username ? user.username[0].toUpperCase() : "?"
+            }}</span>
+          </v-avatar>
+        </template>
+      </v-list-item>
+      <v-divider v-if="user"></v-divider>
+
+      <!-- Navigation Items -->
+      <v-list nav density="compact">
+        <!-- Added nav & density -->
+        <v-list-item
+          v-for="item in navItems"
+          :key="item.title"
+          :to="item.to"
+          :prepend-icon="item.icon"
+          :title="item.title"
+          exact
+          active-class="primary--text"
+          color="primary"
+        ></v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-main class="bg-grey-lighten-4">
+      <!-- Lighter background for main area -->
+      <!-- Add consistent padding around the content -->
+      <v-container fluid class="pa-4 pa-md-6">
+        <slot></slot>
+        <!-- Router view content will go here -->
+      </v-container>
+    </v-main>
+  </v-app>
+</template>
+
+<script>
+import { mapGetters, mapActions, mapState } from "vuex";
+
+export default {
+  name: "MainLayout",
+  data() {
+    return {
+      drawer: null, // Let Vuetify handle initial state based on screen size if needed
+      navItems: [
+        { title: "Dashboard", icon: "mdi-view-dashboard-outline", to: "/" },
+        {
+          title: "Applications",
+          icon: "mdi-briefcase-search-outline",
+          to: "/applications",
+        },
+        {
+          title: "New Application",
+          icon: "mdi-plus-box-outline",
+          to: "/applications/new",
+        },
+      ],
+    };
+  },
+  computed: {
+    ...mapGetters("auth", ["isAuthenticated"]),
+    ...mapState("auth", ["user"]), // Get user info for the drawer
+  },
+  methods: {
+    ...mapActions("auth", ["logout", "fetchUser"]), // Add fetchUser
+  },
+  created() {
+    // Attempt to fetch user info when the layout is created if authenticated
+    if (this.isAuthenticated && !this.user) {
+      this.fetchUser();
+    }
+  },
+};
+</script>
+
+<style scoped>
+/* Add specific styles if needed, but try to rely on Vuetify classes */
+.v-main {
+  /* Ensures content starts below app bar */
+  padding-top: 64px; /* Adjust if app bar height changes */
+}
+.v-navigation-drawer .v-list-item-title {
+  font-size: 0.95rem; /* Slightly smaller nav text */
+}
+</style>
+
+
+
+================================================
+File: job-tracker-frontend/src/plugins/vuetify.js
+================================================
+// Styles
+import "@mdi/font/css/materialdesignicons.css";
+import "vuetify/styles";
+
+// Vuetify
+import { createVuetify } from "vuetify";
+
+export default createVuetify();
+// https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
+
+
+
+================================================
+File: job-tracker-frontend/src/plugins/webfontloader.js
+================================================
+/**
+ * plugins/webfontloader.js
+ *
+ * webfontloader documentation: https://github.com/typekit/webfontloader
+ */
+
+export async function loadFonts() {
+  const webFontLoader = await import(
+    /* webpackChunkName: "webfontloader" */ "webfontloader"
+  );
+
+  webFontLoader.load({
+    google: {
+      families: ["Roboto:100,300,400,500,700,900&display=swap"],
+    },
+  });
+}
+
+
+
+================================================
+File: job-tracker-frontend/src/router/index.js
+================================================
+import { createRouter, createWebHistory } from "vue-router";
+import DashboardView from "../views/DashboardView.vue";
+import ApplicationListView from "../views/ApplicationListView.vue";
+import ApplicationFormView from "../views/ApplicationFormView.vue";
+import LoginView from "../views/LoginView.vue";
+import RegisterView from "../views/RegisterView.vue";
+import store from "../store";
+
+const routes = [
+  {
+    path: "/",
+    name: "dashboard",
+    component: DashboardView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/applications",
+    name: "applications",
+    component: ApplicationListView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/applications/new",
+    name: "new-application",
+    component: ApplicationFormView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/applications/:id",
+    name: "edit-application",
+    component: ApplicationFormView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: LoginView,
+  },
+  {
+    path: "/register",
+    name: "register",
+    component: RegisterView,
+  },
+];
+
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  routes,
+});
+
+// Navigation guard
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = store.getters["auth/isAuthenticated"];
+
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
+    if (!isAuthenticated) {
+      next({ name: "login" });
+    } else {
+      next();
+    }
+  } else {
+    if (isAuthenticated && (to.name === "login" || to.name === "register")) {
+      next({ name: "dashboard" });
+    } else {
+      next();
+    }
+  }
+});
+
+export default router;
+
+
+
+================================================
+File: job-tracker-frontend/src/services/api.js
+================================================
+import axios from "axios";
+
+const apiClient = axios.create({
+  baseURL: "http://localhost:8000/api/v1",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Request interceptor for API calls
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export default {
+  // Auth services
+  register(userData) {
+    return apiClient.post("/auth/register", userData);
+  },
+  login(credentials) {
+    const formData = new URLSearchParams();
+    formData.append("username", credentials.email);
+    formData.append("password", credentials.password);
+    formData.append("grant_type", "password");
+
+    return apiClient.post("/auth/login", formData, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+  },
+  getProfile() {
+    return apiClient.get("/auth/me");
+  },
+
+  // Application services
+  getApplications() {
+    return apiClient.get("/applications/");
+  },
+  getApplication(id) {
+    return apiClient.get(`/applications/${id}`);
+  },
+  createApplication(application) {
+    return apiClient.post("/applications/", application);
+  },
+  updateApplication(id, data) {
+    return apiClient.put(`/applications/${id}`, data);
+  },
+  deleteApplication(id) {
+    return apiClient.delete(`/applications/${id}`);
+  },
+};
+
+
+
+================================================
+File: job-tracker-frontend/src/store/index.js
+================================================
+import { createStore } from "vuex";
+import auth from "./modules/auth";
+import applications from "./modules/applications";
+
+export default createStore({
+  modules: {
+    auth,
+    applications,
+  },
+});
+
+
+
+================================================
+File: job-tracker-frontend/src/store/modules/applications.js
+================================================
+import api from "@/services/api";
+
+export default {
+  namespaced: true,
+  state: {
+    applications: [],
+    currentApplication: null,
+    loading: false,
+    error: null,
+  },
+  getters: {
+    applications: (state) => state.applications,
+    currentApplication: (state) => state.currentApplication,
+    applicationsByStatus: (state) => {
+      const grouped = {};
+      state.applications.forEach((app) => {
+        if (!grouped[app.status]) {
+          grouped[app.status] = [];
+        }
+        grouped[app.status].push(app);
+      });
+      return grouped;
+    },
+  },
+  mutations: {
+    SET_APPLICATIONS(state, applications) {
+      state.applications = applications;
+    },
+    SET_CURRENT_APPLICATION(state, application) {
+      state.currentApplication = application;
+    },
+    ADD_APPLICATION(state, application) {
+      state.applications.push(application);
+    },
+    UPDATE_APPLICATION(state, updatedApplication) {
+      const index = state.applications.findIndex(
+        (a) => a.id === updatedApplication.id
+      );
+      if (index !== -1) {
+        state.applications.splice(index, 1, updatedApplication);
+      }
+    },
+    REMOVE_APPLICATION(state, id) {
+      state.applications = state.applications.filter((a) => a.id !== id);
+    },
+    SET_LOADING(state, loading) {
+      state.loading = loading;
+    },
+    SET_ERROR(state, error) {
+      state.error = error;
+    },
+  },
+  actions: {
+    async fetchApplications({ commit }) {
+      commit("SET_LOADING", true);
+      try {
+        const response = await api.getApplications();
+        commit("SET_APPLICATIONS", response.data);
+      } catch (error) {
+        commit(
+          "SET_ERROR",
+          error.response?.data?.detail || "Failed to fetch applications"
+        );
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    async fetchApplication({ commit }, id) {
+      commit("SET_LOADING", true);
+      try {
+        const response = await api.getApplication(id);
+        commit("SET_CURRENT_APPLICATION", response.data);
+      } catch (error) {
+        commit(
+          "SET_ERROR",
+          error.response?.data?.detail || "Failed to fetch application"
+        );
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    async createApplication({ commit }, applicationData) {
+      commit("SET_LOADING", true);
+      try {
+        const response = await api.createApplication(applicationData);
+        commit("ADD_APPLICATION", response.data);
+        return response.data;
+      } catch (error) {
+        commit(
+          "SET_ERROR",
+          error.response?.data?.detail || "Failed to create application"
+        );
+        throw error;
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    async updateApplication({ commit }, { id, data }) {
+      commit("SET_LOADING", true);
+      try {
+        const response = await api.updateApplication(id, data);
+        commit("UPDATE_APPLICATION", response.data);
+        return response.data;
+      } catch (error) {
+        commit(
+          "SET_ERROR",
+          error.response?.data?.detail || "Failed to update application"
+        );
+        throw error;
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    async deleteApplication({ commit }, id) {
+      commit("SET_LOADING", true);
+      try {
+        await api.deleteApplication(id);
+        commit("REMOVE_APPLICATION", id);
+      } catch (error) {
+        commit(
+          "SET_ERROR",
+          error.response?.data?.detail || "Failed to delete application"
+        );
+        throw error;
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+  },
+};
+
+
+
+================================================
+File: job-tracker-frontend/src/store/modules/auth.js
+================================================
+import api from "@/services/api";
+import router from "@/router";
+
+export default {
+  namespaced: true,
+  state: {
+    token: localStorage.getItem("token") || "",
+    user: null,
+    loading: false,
+    error: null,
+  },
+  getters: {
+    isAuthenticated: (state) => !!state.token,
+    user: (state) => state.user,
+  },
+  mutations: {
+    SET_TOKEN(state, token) {
+      state.token = token;
+    },
+    SET_USER(state, user) {
+      state.user = user;
+    },
+    SET_LOADING(state, loading) {
+      state.loading = loading;
+    },
+    SET_ERROR(state, error) {
+      state.error = error;
+    },
+    LOGOUT(state) {
+      state.token = "";
+      state.user = null;
+    },
+  },
+  actions: {
+    async login({ commit }, credentials) {
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
+      try {
+        // We're now handling form data directly in the API service
+        const response = await api.login(credentials);
+        const token = response.data.access_token;
+
+        localStorage.setItem("token", token);
+        commit("SET_TOKEN", token);
+
+        // Get user profile
+        const userResponse = await api.getProfile();
+        commit("SET_USER", userResponse.data);
+
+        router.push("/");
+      } catch (error) {
+        console.error("Login error:", error.response?.data || error.message);
+        commit("SET_ERROR", error.response?.data?.detail || "Login failed");
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    async register({ commit }, userData) {
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
+      try {
+        await api.register(userData);
+        router.push("/login");
+      } catch (error) {
+        commit(
+          "SET_ERROR",
+          error.response?.data?.detail || "Registration failed"
+        );
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    async fetchUser({ commit }) {
+      if (!localStorage.getItem("token")) return;
+
+      commit("SET_LOADING", true);
+      try {
+        const response = await api.getProfile();
+        commit("SET_USER", response.data);
+      } catch (error) {
+        commit(
+          "SET_ERROR",
+          error.response?.data?.detail || "Failed to fetch user"
+        );
+        // If token is invalid, logout
+        if (error.response?.status === 401) {
+          this.dispatch("auth/logout");
+        }
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+
+    logout({ commit }) {
+      localStorage.removeItem("token");
+      commit("LOGOUT");
+      router.push("/login");
+    },
+  },
+};
+
+
+
+================================================
+File: job-tracker-frontend/src/views/AboutView.vue
+================================================
+<template>
+  <div class="about">
+    <h1>This is an about page</h1>
+  </div>
+</template>
+
+
+
+================================================
+File: job-tracker-frontend/src/views/ApplicationFormView.vue
+================================================
+<template>
+  <main-layout>
+    <v-card max-width="800" class="mx-auto" flat>
+      <!-- Flat card, optional max-width -->
+      <v-card-title class="pa-4">
+        <span class="text-h6 font-weight-regular">{{
+          isEdit ? "Edit Application" : "New Application"
+        }}</span>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text class="pa-4 pa-md-6">
+        <!-- Added spacing between fields using mb-4 -->
+        <v-form
+          ref="formRef"
+          v-model="valid"
+          @submit.prevent="saveApplication"
+          lazy-validation
+        >
+          <v-text-field
+            v-model="form.linkedin_url"
+            label="LinkedIn Job URL"
+            required
+            :rules="urlRules"
+            variant="outlined"
+            density="compact"
+            class="mb-4"
+            prepend-inner-icon="mdi-linkedin"
+          ></v-text-field>
+
+          <v-row>
+            <v-col cols="12" md="8">
+              <v-text-field
+                v-model="form.title"
+                label="Job Title"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                prepend-inner-icon="mdi-briefcase-outline"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="4">
+              <v-select
+                v-model="form.status"
+                :items="statusOptions"
+                label="Status"
+                required
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                prepend-inner-icon="mdi-list-status"
+              ></v-select>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.company"
+                label="Company"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                prepend-inner-icon="mdi-domain"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.location"
+                label="Location"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                prepend-inner-icon="mdi-map-marker-outline"
+              ></v-text-field>
+            </v-col>
+          </v-row>
+
+          <v-menu
+            v-model="dateMenu"
+            :close-on-content-click="false"
+            min-width="auto"
+          >
+            <template v-slot:activator="{ props }">
+              <v-text-field
+                :model-value="formattedDate"
+                label="Applied Date (Optional)"
+                readonly
+                v-bind="props"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                clearable
+                @click:clear="form.applied_date = null"
+                prepend-inner-icon="mdi-calendar-check-outline"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="form.applied_date"
+              @update:modelValue="dateMenu = false"
+              title="Applied Date"
+              show-adjacent-months
+              color="primary"
+            ></v-date-picker>
+          </v-menu>
+
+          <v-textarea
+            v-model="form.job_description"
+            label="Job Description (auto-filled from LinkedIn)"
+            rows="6"
+            variant="outlined"
+            density="compact"
+            class="mb-4"
+            readonly
+            bg-color="grey-lighten-4"
+          ></v-textarea>
+
+          <v-textarea
+            v-model="form.notes"
+            label="Your Notes"
+            rows="4"
+            variant="outlined"
+            density="compact"
+            class="mb-4"
+            prepend-inner-icon="mdi-note-text-outline"
+          ></v-textarea>
+        </v-form>
+      </v-card-text>
+      <v-divider></v-divider>
+      <v-card-actions class="pa-4">
+        <v-spacer></v-spacer>
+        <v-btn color="grey-darken-1" variant="text" :to="'/applications'">
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
+          :loading="loading"
+          :disabled="!valid || loading"
+          @click="saveApplication"
+          variant="flat"
+        >
+          {{ isEdit ? "Save Changes" : "Create Application" }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+    <!-- Optional: Snackbar for feedback -->
+    <v-snackbar v-model="showSnackbar" :color="snackbarColor" timeout="3000">
+      {{ snackbarText }}
+      <template v-slot:actions>
+        <v-btn color="white" variant="text" @click="showSnackbar = false"
+          >Close</v-btn
+        >
+      </template>
+    </v-snackbar>
+  </main-layout>
+</template>
+
+<script>
+// 1. IMPORT Vuex helpers and the Layout component
+import { mapState, mapActions } from "vuex";
+import MainLayout from "@/layouts/MainLayout.vue";
+
+export default {
+  name: "ApplicationFormView",
+  // 2. REGISTER the MainLayout component
+  components: {
+    MainLayout,
+  },
+  data() {
+    return {
+      valid: false,
+      formRef: null,
+      showSnackbar: false,
+      snackbarText: "",
+      snackbarColor: "success",
+      urlRules: [
+        (v) => !!v || "URL is required",
+        (v) =>
+          /^https?:\/\/.+/.test(v) || "URL must be valid (e.g., https://...)",
+        // Optional stricter rule:
+        // v => (v && (v.includes('linkedin.com/jobs/view/') || v.includes('linkedin.com/jobs/collections/'))) || 'Please provide a valid LinkedIn job URL (jobs/view/ or jobs/collections/)',
+      ],
+      form: {
+        linkedin_url: "",
+        title: "",
+        company: "",
+        location: "",
+        job_description: "",
+        applied_date: null,
+        status: "Wishlist",
+        notes: "",
+        // Initialize other fields potentially loaded during edit
+        date_posted: null,
+        linkedin_job_id: null,
+      },
+      dateMenu: false,
+      statusOptions: [
+        "Wishlist",
+        "Applied",
+        "Screening",
+        "Interview",
+        "Technical Test",
+        "Final Interview",
+        "Offer",
+        "Accepted",
+        "Rejected",
+        "Withdrawn",
+      ],
+    };
+  },
+  computed: {
+    // 3. MAP Vuex state correctly
+    ...mapState("applications", ["loading", "currentApplication", "error"]),
+
+    isEdit() {
+      return !!this.$route.params.id;
+    },
+    formattedDate() {
+      // ... (keep the existing formattedDate logic)
+      if (!this.form.applied_date) return "";
+      try {
+        const date = new Date(this.form.applied_date);
+        if (isNaN(date.getTime())) {
+          const parts = this.form.applied_date.split("-");
+          if (parts.length === 3) {
+            // Use UTC to avoid timezone shifts when creating from string parts
+            const adjustedDate = new Date(
+              Date.UTC(parts[0], parts[1] - 1, parts[2])
+            );
+            return adjustedDate.toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+          }
+          return "";
+        }
+        return date.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      } catch (e) {
+        console.error("Error formatting date:", e);
+        return "";
+      }
+    },
+  },
+  methods: {
+    // 4. MAP Vuex actions correctly
+    ...mapActions("applications", [
+      "createApplication",
+      "updateApplication",
+      "fetchApplication",
+    ]),
+
+    // Your custom methods
+    showFeedback(message, isError = false) {
+      this.snackbarText = message;
+      this.snackbarColor = isError ? "error" : "success";
+      this.showSnackbar = true;
+    },
+    async saveApplication() {
+      const { valid } = await this.$refs.formRef.validate();
+      if (valid) {
+        this.showFeedback("Saving...", false); // Optional: indicate saving starts
+        try {
+          const payload = { ...this.form };
+          // Ensure applied_date is handled correctly (null or valid date)
+          if (payload.applied_date instanceof Date) {
+            // Backend might expect ISO string - convert if needed
+            // payload.applied_date = payload.applied_date.toISOString();
+            // Or keep as Date object if backend/Pydantic handles it
+          } else if (!payload.applied_date || payload.applied_date === "") {
+            payload.applied_date = null;
+          } else {
+            // If it's a string like YYYY-MM-DD, ensure it's handled correctly
+            // Depending on backend, might need conversion or leave as string
+          }
+
+          // Remove fields not relevant for create/update payload if they exist in form state
+          // delete payload.status_history; // Example if these were added to form state
+          // delete payload.documents;
+          // delete payload.contacts;
+
+          if (this.isEdit) {
+            // Ensure only fields allowed by ApplicationUpdate model are sent
+            const updateData = {
+              title: payload.title,
+              company: payload.company,
+              location: payload.location,
+              // job_description: payload.job_description, // Usually not user-editable
+              // date_posted: payload.date_posted, // Keep original unless editable
+              applied_date: payload.applied_date,
+              status: payload.status,
+              notes: payload.notes,
+            };
+            await this.updateApplication({
+              id: this.$route.params.id,
+              data: updateData,
+            }); // `this.updateApplication` is now available
+            this.showFeedback("Application updated successfully.");
+          } else {
+            // `this.createApplication` is now available
+            // Send fields relevant for ApplicationCreate
+            const createData = {
+              linkedin_url: payload.linkedin_url,
+              title: payload.title,
+              company: payload.company,
+              location: payload.location,
+              job_description: payload.job_description, // Include if backend uses it on create
+              applied_date: payload.applied_date,
+              status: payload.status,
+              notes: payload.notes,
+            };
+            await this.createApplication(createData);
+            this.showFeedback("Application created successfully.");
+          }
+          this.$router.push("/applications");
+        } catch (error) {
+          console.error("Error saving application:", error);
+          // Use optional chaining for safer error access
+          const detail =
+            error?.response?.data?.detail ||
+            this.error ||
+            "Failed to save application.";
+          this.showFeedback(detail, true);
+        }
+      } else {
+        console.log("Form is not valid");
+        this.showFeedback("Please fix the errors in the form.", true);
+      }
+    },
+  },
+  async created() {
+    if (this.isEdit) {
+      console.log(`Fetching application with ID: ${this.$route.params.id}`); // Debug log
+      // `this.fetchApplication` is now available
+      await this.fetchApplication(this.$route.params.id);
+      if (this.currentApplication) {
+        // Copy values to form, handling potential nulls/undefined
+        Object.keys(this.form).forEach((key) => {
+          if (this.currentApplication[key] !== undefined) {
+            // Handle date specifically if needed, otherwise direct assign
+            if (key === "applied_date" && this.currentApplication[key]) {
+              // Ensure it's a format the date picker understands or convert
+              // Often direct assignment works if it's ISO string or already Date
+              this.form[key] = this.currentApplication[key];
+            } else {
+              this.form[key] = this.currentApplication[key];
+            }
+          }
+        });
+        // Ensure date is null if not present
+        if (!this.form.applied_date) {
+          this.form.applied_date = null;
+        }
+      } else if (this.error) {
+        console.error("Error fetching application:", this.error);
+        this.showFeedback(`Error loading application: ${this.error}`, true);
+        // Optionally redirect back
+        // this.$router.push("/applications");
+      } else {
+        console.warn(
+          "Fetched application data is null or undefined, but no error reported."
+        );
+        this.showFeedback("Could not load application data.", true);
+      }
+    }
+  },
+  mounted() {
+    this.formRef = this.$refs.formRef;
+  },
+};
+</script>
+
+<style scoped>
+.v-card {
+  border: 1px solid #e0e0e0; /* Subtle border instead of shadow */
+}
+.v-textarea[readonly] {
+  cursor: default; /* Indicate non-editable */
+}
+</style>
+
+
+
+================================================
+File: job-tracker-frontend/src/views/ApplicationListView.vue
+================================================
+<template>
+  <main-layout>
+    <!-- Use flat or low elevation for card -->
+    <v-card flat class="pa-0">
+      <v-card-title class="d-flex align-center pa-4">
+        <span class="text-h6 font-weight-regular">Applications</span>
+        <v-spacer></v-spacer>
+        <v-text-field
+          v-model="search"
+          append-inner-icon="mdi-magnify"
+          label="Search Applications"
+          single-line
+          hide-details
+          density="compact"
+          variant="outlined"
+          class="mr-4"
+          style="max-width: 300px"
+        ></v-text-field>
+        <v-btn
+          color="primary"
+          to="/applications/new"
+          prepend-icon="mdi-plus"
+          variant="flat"
+        >
+          <!-- Flat variant -->
+          New Application
+        </v-btn>
+      </v-card-title>
+
+      <v-divider></v-divider>
+
+      <!-- Add hover effect, density -->
+      <v-data-table
+        :headers="headers"
+        :items="applications"
+        :search="search"
+        :loading="loading"
+        class="pa-0"
+        item-value="id"
+        :items-per-page="15"
+        hover
+        density="comfortable"
+      >
+        <!-- Column Templates using v-slot:[`item.key`] -->
+        <template v-slot:[`item.company`]="{ item }">
+          <div class="font-weight-medium">{{ item.company || "-" }}</div>
+        </template>
+
+        <template v-slot:[`item.status`]="{ item }">
+          <!-- Use tonal variant for softer chips -->
+          <v-chip
+            :color="getStatusColor(item.status)"
+            size="small"
+            variant="tonal"
+            label
+          >
+            {{ item.status }}
+          </v-chip>
+        </template>
+
+        <template v-slot:[`item.date_posted`]="{ item }">
+          <span class="text-grey-darken-1">{{
+            formatDate(item.date_posted)
+          }}</span>
+        </template>
+
+        <template v-slot:[`item.applied_date`]="{ item }">
+          <span class="text-grey-darken-1">{{
+            formatDate(item.applied_date)
+          }}</span>
+        </template>
+
+        <template v-slot:[`item.linkedin_url`]="{ item }">
+          <v-tooltip location="top" text="Open LinkedIn Page">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-if="item.linkedin_url"
+                icon
+                variant="text"
+                color="blue-darken-1"
+                :href="item.linkedin_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                v-bind="props"
+              >
+                <v-icon size="medium">mdi-linkedin</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </template>
+
+        <template v-slot:[`item.actions`]="{ item }">
+          <v-tooltip location="top" text="Edit Application">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                icon
+                variant="text"
+                size="small"
+                color="grey-darken-1"
+                :to="`/applications/${item.id}`"
+                v-bind="props"
+              >
+                <v-icon size="medium">mdi-pencil-outline</v-icon>
+                <!-- Outline icon -->
+              </v-btn>
+            </template>
+          </v-tooltip>
+          <v-tooltip location="top" text="Delete Application">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                icon
+                variant="text"
+                size="small"
+                color="grey-darken-1"
+                @click="confirmDelete(item)"
+                v-bind="props"
+              >
+                <v-icon size="medium">mdi-delete-outline</v-icon>
+                <!-- Outline icon -->
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </template>
+
+        <template v-slot:loading>
+          <v-skeleton-loader type="table-tbody"></v-skeleton-loader>
+          <!-- Cleaner loading -->
+        </template>
+
+        <template v-slot:no-data>
+          <div class="text-center pa-4">
+            <v-icon size="large" color="grey-lighten-1" class="mb-2"
+              >mdi-text-box-search-outline</v-icon
+            >
+            <div class="text-grey">No applications found.</div>
+            <v-btn
+              color="primary"
+              class="mt-4"
+              size="small"
+              to="/applications/new"
+              variant="flat"
+            >
+              Create Your First Application
+            </v-btn>
+          </div>
+        </template>
+      </v-data-table>
+
+      <!-- Delete Confirmation Dialog - Refined Design -->
+      <v-dialog v-model="deleteDialog" max-width="450px" persistent>
+        <!-- Persistent -->
+        <v-card rounded="lg">
+          <!-- Rounded corners -->
+          <v-card-title
+            class="text-h6 font-weight-regular pa-4 d-flex justify-space-between align-center"
+          >
+            <span>Confirm Deletion</span>
+            <v-btn
+              icon
+              variant="text"
+              @click="deleteDialog = false"
+              size="small"
+              ><v-icon>mdi-close</v-icon></v-btn
+            >
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text class="pa-4 text-body-1">
+            Are you sure you want to permanently delete the application for
+            <strong class="font-weight-medium">{{
+              applicationToDelete?.title || "this job"
+            }}</strong>
+            at
+            <strong class="font-weight-medium">{{
+              applicationToDelete?.company || "this company"
+            }}</strong
+            >? <br /><br />
+            <span class="text-grey-darken-1"
+              >This action cannot be undone.</span
+            >
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-actions class="pa-4">
+            <v-spacer></v-spacer>
+            <v-btn
+              color="grey-darken-1"
+              variant="text"
+              @click="deleteDialog = false"
+              >Cancel</v-btn
+            >
+            <v-btn color="error" variant="flat" @click="handleDeleteConfirm"
+              >Delete Application</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-card>
+  </main-layout>
+</template>
+
+<script>
+// ... (script remains largely the same, ensure computed/methods are correct as per previous step)
+import { mapState, mapActions } from "vuex";
+import MainLayout from "@/layouts/MainLayout.vue";
+
+export default {
+  name: "ApplicationListView",
+  components: {
+    MainLayout,
+  },
+  data() {
+    return {
+      search: "",
+      deleteDialog: false,
+      applicationToDelete: null,
+      headers: [
+        // Key names match data properties
+        {
+          title: "Company",
+          key: "company",
+          align: "start",
+          sortable: true,
+          minWidth: "150px",
+        },
+        {
+          title: "Position",
+          key: "title",
+          align: "start",
+          sortable: true,
+          minWidth: "200px",
+        },
+        {
+          title: "Location",
+          key: "location",
+          align: "start",
+          sortable: true,
+          minWidth: "150px",
+        },
+        {
+          title: "Posted",
+          key: "date_posted",
+          align: "start",
+          sortable: true,
+          minWidth: "120px",
+        },
+        {
+          title: "Applied",
+          key: "applied_date",
+          align: "start",
+          sortable: true,
+          minWidth: "120px",
+        },
+        {
+          title: "Status",
+          key: "status",
+          align: "center",
+          sortable: true,
+          minWidth: "120px",
+        },
+        {
+          title: "LinkedIn",
+          key: "linkedin_url",
+          align: "center",
+          sortable: false,
+        },
+        {
+          title: "Actions",
+          key: "actions",
+          align: "end",
+          sortable: false,
+          minWidth: "100px",
+        }, // Align actions end
+      ],
+    };
+  },
+  computed: {
+    ...mapState("applications", ["applications", "loading", "error"]),
+  },
+  methods: {
+    ...mapActions("applications", ["fetchApplications", "deleteApplication"]),
+    formatDate(dateString) {
+      if (!dateString) return "–"; // Use em dash for empty
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "Invalid";
+        // More concise format
+        return date.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      } catch (e) {
+        return "Invalid";
+      }
+    },
+    getStatusColor(status) {
+      // Using semantic colors where appropriate
+      const colors = {
+        Wishlist: "grey",
+        Applied: "blue",
+        Screening: "orange",
+        Interview: "purple",
+        "Technical Test": "deep-purple",
+        "Final Interview": "cyan darken-1",
+        Offer: "teal",
+        Accepted: "success",
+        Rejected: "error",
+        Withdrawn: "blue-grey",
+      };
+      return colors[status] || "grey";
+    },
+    confirmDelete(item) {
+      this.applicationToDelete = item;
+      this.deleteDialog = true;
+    },
+    async handleDeleteConfirm() {
+      // ... (delete logic remains the same)
+      if (this.applicationToDelete && this.applicationToDelete.id) {
+        try {
+          await this.deleteApplication(this.applicationToDelete.id);
+          this.deleteDialog = false;
+          this.applicationToDelete = null;
+        } catch (error) {
+          console.error("Failed to delete application:", error);
+          // TODO: Show user feedback (snackbar)
+          this.deleteDialog = false;
+          this.applicationToDelete = null;
+        }
+      }
+    },
+  },
+  created() {
+    this.fetchApplications();
+  },
+};
+</script>
+
+<style scoped>
+/* Target header text for slight boldness */
+:deep(.v-data-table-header__content span) {
+  font-weight: 500;
+  color: #424242; /* Darker grey */
+}
+/* Ensure enough space for end-aligned actions */
+:deep(td:last-child) {
+  text-align: right;
+}
+</style>
+
+
+
+================================================
+File: job-tracker-frontend/src/views/DashboardView.vue
+================================================
+<template>
+  <main-layout>
+    <v-row>
+      <!-- Summary Cards -->
+      <v-col cols="12" md="4">
+        <v-card variant="outlined" class="fill-height pa-2">
+          <!-- Outlined variant -->
+          <v-card-item>
+            <!-- Use v-card-item for structured content -->
+            <template v-slot:prepend>
+              <v-icon color="primary" size="x-large"
+                >mdi-briefcase-variant-outline</v-icon
+              >
+            </template>
+            <v-card-title class="text-subtitle-1 font-weight-medium"
+              >Total Applications</v-card-title
+            >
+          </v-card-item>
+          <v-card-text class="text-h4 text-center pb-4">
+            <v-progress-circular
+              v-if="loading"
+              indeterminate
+              color="primary"
+              size="small"
+            ></v-progress-circular>
+            <span v-else>{{ applications.length }}</span>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <!-- Repeat similar structure for Active and Interview cards with different icons/colors -->
+      <v-col cols="12" md="4">
+        <v-card variant="outlined" class="fill-height pa-2">
+          <v-card-item>
+            <template v-slot:prepend>
+              <v-icon color="info" size="x-large"
+                >mdi-chart-line-variant</v-icon
+              >
+            </template>
+            <v-card-title class="text-subtitle-1 font-weight-medium"
+              >Active Applications</v-card-title
+            >
+          </v-card-item>
+          <v-card-text class="text-h4 text-center pb-4">
+            <v-progress-circular
+              v-if="loading"
+              indeterminate
+              color="info"
+              size="small"
+            ></v-progress-circular>
+            <span v-else>{{ activeApplications.length }}</span>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="4">
+        <v-card variant="outlined" class="fill-height pa-2">
+          <v-card-item>
+            <template v-slot:prepend>
+              <v-icon color="success" size="x-large">mdi-account-voice</v-icon>
+            </template>
+            <v-card-title class="text-subtitle-1 font-weight-medium"
+              >Interview Stage</v-card-title
+            >
+          </v-card-item>
+          <v-card-text class="text-h4 text-center pb-4">
+            <v-progress-circular
+              v-if="loading"
+              indeterminate
+              color="success"
+              size="small"
+            ></v-progress-circular>
+            <span v-else>{{ interviewApplications.length }}</span>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Recent Applications Table Card -->
+      <v-col cols="12">
+        <v-card flat class="mt-6">
+          <!-- Flat card -->
+          <v-card-title class="d-flex align-center pa-4">
+            <span class="text-h6 font-weight-regular">Recent Activity</span>
+            <v-spacer></v-spacer>
+            <v-btn
+              color="primary"
+              size="small"
+              to="/applications"
+              variant="text"
+              append-icon="mdi-arrow-right"
+            >
+              View All
+            </v-btn>
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text class="pa-0">
+            <!-- Apply similar table styles as ApplicationListView -->
+            <v-data-table
+              :headers="headers"
+              :items="recentApplications"
+              :loading="loading"
+              :items-per-page="5"
+              item-value="id"
+              density="comfortable"
+              hover
+            >
+              <!-- Copy relevant <template v-slot:[`item.*`]> slots from ApplicationListView -->
+              <!-- Example: -->
+              <template v-slot:[`item.company`]="{ item }">
+                <div class="font-weight-medium">{{ item.company || "-" }}</div>
+              </template>
+              <template v-slot:[`item.status`]="{ item }">
+                <v-chip
+                  :color="getStatusColor(item.status)"
+                  size="small"
+                  variant="tonal"
+                  label
+                >
+                  {{ item.status }}
+                </v-chip>
+              </template>
+              <template v-slot:[`item.applied_date`]="{ item }">
+                <span class="text-grey-darken-1">{{
+                  formatDate(item.applied_date)
+                }}</span>
+              </template>
+              <template v-slot:[`item.date_posted`]="{ item }">
+                <span class="text-grey-darken-1">{{
+                  formatDate(item.date_posted)
+                }}</span>
+              </template>
+              <template v-slot:[`item.linkedin_url`]="{ item }">
+                <!-- LinkedIn Button -->
+                <v-tooltip location="top" text="Open LinkedIn Page">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      v-if="item.linkedin_url"
+                      icon
+                      variant="text"
+                      color="blue-darken-1"
+                      :href="item.linkedin_url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      size="small"
+                      v-bind="props"
+                    >
+                      <v-icon size="medium">mdi-linkedin</v-icon>
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+              </template>
+              <template v-slot:[`item.actions`]="{ item }">
+                <!-- Edit button only -->
+                <v-tooltip location="top" text="View/Edit Application">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon
+                      variant="text"
+                      size="small"
+                      color="grey-darken-1"
+                      :to="`/applications/${item.id}`"
+                      v-bind="props"
+                    >
+                      <v-icon size="medium">mdi-pencil-outline</v-icon>
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+              </template>
+              <!-- Loading / No Data -->
+              <template v-slot:loading>
+                <v-skeleton-loader type="table-tbody@5"></v-skeleton-loader>
+              </template>
+              <template v-slot:no-data>
+                <div class="text-center pa-4 text-grey">
+                  No recent activity.
+                </div>
+              </template>
+            </v-data-table>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </main-layout>
+</template>
+
+<script>
+// ... (script remains largely the same, ensure computed/methods/headers are correct)
+import { mapState, mapActions } from "vuex";
+import MainLayout from "@/layouts/MainLayout.vue";
+
+export default {
+  name: "DashboardView",
+  components: { MainLayout },
+  data() {
+    return {
+      headers: [
+        // Adjust keys/titles as needed, align actions end
+        {
+          title: "Company",
+          key: "company",
+          align: "start",
+          sortable: false,
+          minWidth: "150px",
+        },
+        {
+          title: "Position",
+          key: "title",
+          align: "start",
+          sortable: false,
+          minWidth: "200px",
+        },
+        // { title: "Location", key: "location", align: 'start', sortable: false }, // Maybe hide location on dashboard
+        {
+          title: "Applied",
+          key: "applied_date",
+          align: "start",
+          sortable: false,
+          minWidth: "120px",
+        },
+        {
+          title: "Status",
+          key: "status",
+          align: "center",
+          sortable: false,
+          minWidth: "120px",
+        },
+        {
+          title: "LinkedIn",
+          key: "linkedin_url",
+          align: "center",
+          sortable: false,
+        },
+        { title: "Actions", key: "actions", align: "end", sortable: false },
+      ],
+    };
+  },
+  computed: {
+    // Map state from the 'applications' Vuex module
+    ...mapState("applications", ["applications", "loading", "error"]), // Added error mapping too
+
+    // Other computed properties that depend on the mapped state
+    recentApplications() {
+      // Defensive check: ensure applications is an array before processing
+      if (!Array.isArray(this.applications)) {
+        return [];
+      }
+      return [...this.applications]
+        .sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA; // Descending order
+        })
+        .slice(0, 5); // Show top 5
+    },
+    activeApplications() {
+      // Defensive check
+      if (!Array.isArray(this.applications)) {
+        return [];
+      }
+      const activeStatuses = [
+        "Wishlist",
+        "Applied",
+        "Screening",
+        "Interview",
+        "Technical Test",
+        "Final Interview",
+        "Offer",
+      ];
+      return this.applications.filter((app) =>
+        activeStatuses.includes(app.status)
+      );
+    },
+    interviewApplications() {
+      // Defensive check
+      if (!Array.isArray(this.applications)) {
+        return [];
+      }
+      const interviewStatuses = [
+        "Interview",
+        "Technical Test",
+        "Final Interview",
+      ];
+      return this.applications.filter((app) =>
+        interviewStatuses.includes(app.status)
+      );
+    },
+  },
+  methods: {
+    // ... mapActions, formatDate, getStatusColor ...
+    ...mapActions("applications", ["fetchApplications"]),
+    formatDate(dateString) {
+      if (!dateString) return "–";
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "Invalid";
+        return date.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        }); // Shorter format for dashboard
+      } catch (e) {
+        return "Invalid";
+      }
+    },
+    getStatusColor(status) {
+      /* ... colors ... */
+      const colors = {
+        Wishlist: "grey",
+        Applied: "blue",
+        Screening: "orange",
+        Interview: "purple",
+        "Technical Test": "deep-purple",
+        "Final Interview": "cyan darken-1",
+        Offer: "teal",
+        Accepted: "success",
+        Rejected: "error",
+        Withdrawn: "blue-grey",
+      };
+      return colors[status] || "grey";
+    },
+  },
+  created() {
+    // Fetch if applications state is not yet initialized (null/undefined)
+    // or if it's an empty array.
+    if (!this.applications || this.applications.length === 0) {
+      console.log("Dashboard created: Fetching applications..."); // Optional debug log
+      this.fetchApplications();
+    } else {
+      console.log("Dashboard created: Applications already loaded."); // Optional debug log
+    }
+  },
+};
+</script>
+
+<style scoped>
+.v-card.fill-height {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Helps align content vertically */
+}
+.v-card-item {
+  padding-bottom: 8px; /* Reduce space below title area */
+}
+.v-card-text.text-center {
+  padding-top: 0; /* Reduce space above metric */
+}
+:deep(.v-data-table-header__content span) {
+  font-weight: 500;
+  color: #424242;
+}
+:deep(td:last-child) {
+  text-align: right;
+}
+</style>
+
+
+
+================================================
+File: job-tracker-frontend/src/views/HomeView.vue
+================================================
+<template>
+  <HelloWorld />
+</template>
+
+<script>
+import { defineComponent } from "vue";
+
+// Components
+import HelloWorld from "../components/HelloWorld.vue";
+
+export default defineComponent({
+  name: "HomeView",
+
+  components: {
+    HelloWorld,
+  },
+});
+</script>
+
+
+
+================================================
+File: job-tracker-frontend/src/views/LoginView.vue
+================================================
+<template>
+  <v-container class="fill-height bg-grey-lighten-4" fluid>
+    <!-- Match main background -->
+    <v-row align="center" justify="center">
+      <v-col cols="12" sm="8" md="5" lg="4">
+        <!-- Use flat card with border -->
+        <v-card class="pa-4" flat border rounded="lg">
+          <v-card-title class="text-center text-h5 font-weight-regular mb-4">
+            Welcome Back
+          </v-card-title>
+          <v-card-text>
+            <!-- Use lazy-validation -->
+            <v-form
+              @submit.prevent="handleLogin"
+              ref="loginForm"
+              lazy-validation
+            >
+              <v-text-field
+                v-model="email"
+                label="Email Address"
+                name="email"
+                prepend-inner-icon="mdi-email-outline"
+                type="email"
+                required
+                :rules="emailRules"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+              ></v-text-field>
+
+              <v-text-field
+                v-model="password"
+                label="Password"
+                name="password"
+                prepend-inner-icon="mdi-lock-outline"
+                :append-inner-icon="
+                  showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'
+                "
+                :type="showPassword ? 'text' : 'password'"
+                required
+                :rules="passwordRules"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                @click:append-inner="showPassword = !showPassword"
+              ></v-text-field>
+
+              <v-alert
+                v-if="error"
+                type="error"
+                density="compact"
+                variant="tonal"
+                class="mb-4"
+              >
+                {{ error }}
+              </v-alert>
+
+              <v-btn
+                color="primary"
+                @click="handleLogin"
+                :loading="loading"
+                :disabled="loading"
+                block
+                size="large"
+                variant="flat"
+                class="mb-2"
+              >
+                Login
+              </v-btn>
+
+              <div class="text-center mt-4">
+                <span class="text-grey">Don't have an account?</span>
+                <v-btn
+                  to="/register"
+                  variant="text"
+                  color="primary"
+                  size="small"
+                  >Register Now</v-btn
+                >
+              </div>
+            </v-form>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import { mapState, mapActions } from "vuex";
+
+export default {
+  name: "LoginView",
+  data() {
+    return {
+      email: "",
+      password: "",
+      showPassword: false,
+      loginForm: null, // For validation ref
+      emailRules: [
+        (v) => !!v || "Email is required",
+        (v) => /.+@.+\..+/.test(v) || "Email must be valid",
+      ],
+      passwordRules: [(v) => !!v || "Password is required"],
+    };
+  },
+  computed: {
+    ...mapState("auth", ["loading", "error"]),
+  },
+  methods: {
+    ...mapActions("auth", ["login"]),
+    async handleLogin() {
+      const { valid } = await this.$refs.loginForm.validate();
+      if (valid) {
+        this.login({
+          email: this.email,
+          password: this.password,
+        });
+      }
+    },
+  },
+  mounted() {
+    this.loginForm = this.$refs.loginForm;
+  },
+};
+</script>
+
+<style scoped>
+.v-card {
+  /* Override potential default shadows if needed */
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05) !important; /* Softer shadow */
+}
+</style>
+
+
+
+================================================
+File: job-tracker-frontend/src/views/RegisterView.vue
+================================================
+<template>
+  <v-container class="fill-height bg-grey-lighten-4" fluid>
+    <v-row align="center" justify="center">
+      <v-col cols="12" sm="8" md="5" lg="4">
+        <v-card class="pa-4" flat border rounded="lg">
+          <v-card-title class="text-center text-h5 font-weight-regular mb-4">
+            Create Your Account
+          </v-card-title>
+          <v-card-text>
+            <v-form
+              @submit.prevent="handleRegister"
+              ref="registerForm"
+              lazy-validation
+            >
+              <!-- Username Field -->
+              <v-text-field
+                v-model="username"
+                label="Username"
+                name="username"
+                prepend-inner-icon="mdi-account-outline"
+                type="text"
+                required
+                :rules="usernameRules"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+              ></v-text-field>
+
+              <!-- Email Field -->
+              <v-text-field
+                v-model="email"
+                label="Email Address"
+                name="email"
+                prepend-inner-icon="mdi-email-outline"
+                type="email"
+                required
+                :rules="emailRules"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+              ></v-text-field>
+
+              <!-- Password Field -->
+              <v-text-field
+                v-model="password"
+                label="Password"
+                name="password"
+                prepend-inner-icon="mdi-lock-outline"
+                :append-inner-icon="
+                  showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'
+                "
+                :type="showPassword ? 'text' : 'password'"
+                required
+                :rules="passwordRules"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                @click:append-inner="showPassword = !showPassword"
+                hint="Minimum 8 characters"
+                persistent-hint
+              ></v-text-field>
+
+              <!-- Confirm Password Field -->
+              <v-text-field
+                v-model="passwordConfirmation"
+                label="Confirm Password"
+                name="password_confirmation"
+                prepend-inner-icon="mdi-lock-check-outline"
+                :append-inner-icon="
+                  showConfirmPassword
+                    ? 'mdi-eye-off-outline'
+                    : 'mdi-eye-outline'
+                "
+                :type="showConfirmPassword ? 'text' : 'password'"
+                required
+                :rules="confirmPasswordRules"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+                @click:append-inner="showConfirmPassword = !showConfirmPassword"
+              ></v-text-field>
+
+              <!-- Error Alert -->
+              <v-alert
+                v-if="error"
+                type="error"
+                density="compact"
+                variant="tonal"
+                class="mb-4"
+              >
+                {{ error }}
+              </v-alert>
+
+              <!-- Register Button -->
+              <v-btn
+                color="primary"
+                @click="handleRegister"
+                :loading="loading"
+                :disabled="loading"
+                block
+                size="large"
+                variant="flat"
+                class="mb-2"
+              >
+                Register
+              </v-btn>
+
+              <!-- Login Link -->
+              <div class="text-center mt-4">
+                <span class="text-grey">Already have an account?</span>
+                <v-btn to="/login" variant="text" color="primary" size="small"
+                  >Login Now</v-btn
+                >
+              </div>
+            </v-form>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import { mapState, mapActions } from "vuex";
+
+export default {
+  name: "RegisterView",
+  data() {
+    return {
+      username: "",
+      email: "",
+      password: "",
+      passwordConfirmation: "", // Added for confirmation
+      showPassword: false,
+      showConfirmPassword: false, // Added for confirmation field
+      registerForm: null, // For validation ref
+
+      // Validation Rules
+      requiredRule: [(v) => !!v || "This field is required"],
+      usernameRules: [
+        (v) => !!v || "Username is required",
+        (v) => (v && v.length >= 3) || "Username must be at least 3 characters",
+        // Optional: Add regex for allowed characters if needed
+        // v => /^[a-zA-Z0-9_]+$/.test(v) || 'Username can only contain letters, numbers, and underscores',
+      ],
+      emailRules: [
+        (v) => !!v || "Email is required",
+        (v) => /.+@.+\..+/.test(v) || "E-mail must be valid",
+      ],
+      passwordRules: [
+        (v) => !!v || "Password is required",
+        (v) => (v && v.length >= 8) || "Password must be at least 8 characters",
+        // Optional: Add complexity rules (e.g., uppercase, number, symbol) if desired
+      ],
+      confirmPasswordRules: [
+        (v) => !!v || "Please confirm your password",
+        // Check if it matches the password field
+        (v) => v === this.password || "Passwords do not match",
+      ],
+    };
+  },
+  computed: {
+    // Map state from the 'auth' module
+    ...mapState("auth", ["loading", "error"]),
+  },
+  methods: {
+    // Map the 'register' action from the 'auth' module
+    ...mapActions("auth", ["register"]),
+
+    async handleRegister() {
+      // Validate the form using the ref
+      const { valid } = await this.$refs.registerForm.validate();
+
+      if (valid) {
+        // Call the mapped Vuex action 'register'
+        this.register({
+          username: this.username,
+          email: this.email,
+          password: this.password,
+          // Note: We don't send passwordConfirmation to the backend
+        });
+      } else {
+        console.log("Registration form is not valid");
+      }
+    },
+  },
+  mounted() {
+    // Assign the ref after component is mounted
+    this.registerForm = this.$refs.registerForm;
+  },
+};
+</script>
+
+<style scoped>
+/* Consistent styling with LoginView */
+.v-card {
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05) !important; /* Softer shadow */
+}
+/* Ensure hints don't cause layout shifts if possible */
+:deep(.v-input__details) {
+  min-height: 14px;
+  padding-top: 2px;
+}
+</style>
+
+
+
+================================================
+File: tests/test_auth.py
+================================================
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+# Add more tests for authentication endpoints
+
