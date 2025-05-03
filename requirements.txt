@@ -1,3 +1,4 @@
 gitingest
 google-generativeai
 python-dotenv
+pydantic
