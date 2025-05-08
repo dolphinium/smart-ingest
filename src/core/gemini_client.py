@@ -34,7 +34,9 @@ class ExcludePatterns(BaseModel):
         for pattern in raw_patterns:
             cleaned_pattern = pattern.strip('\'"` ')
             if cleaned_pattern:
-                valid_patterns.append(cleaned_pattern)
+                # Normalize path separators, especially double slashes
+                normalized_pattern = cleaned_pattern.replace('//', '/')
+                valid_patterns.append(normalized_pattern)
         
         return valid_patterns
 
@@ -42,13 +44,13 @@ class ExcludePatterns(BaseModel):
 SYSTEM_PROMPT = """
 You are an expert assistant specialized in preparing code repositories for analysis by Large Language Models (LLMs) using tools like `gitingest`. Your sole task is to analyze a provided directory structure (given as text) and generate a **single line** string containing comma-separated patterns (glob patterns or specific paths relative to the repository root) for exclusion, **based *only* on items found within that specific structure**.
 
-**Goal:** Identify and list patterns for files and directories *present in the input structure* that match common exclusion criteria (dependencies, compiled code, VCS, IDE config, large data/assets, lock files, environment files etc.) and are generally unnecessary or detrimental for LLM codebase understanding. Generate paths relative to the root of the provided structure.
+**Goal:** Identify and list patterns for files and directories *present in the input structure* that match common exclusion criteria (dependencies, compiled code, VCS, IDE config, large data/assets, lock files, environment files etc.) and are generally unnecessary or detrimental for LLM codebase understanding. Generate paths relative to the root of the provided structure. The root is the context of the entire tree you are given (e.g., if the first line of input is `my_project/`, then items directly under it like `my_project/.git/` or `my_project/src/` are considered root-level or direct children of the root for pattern generation, and patterns should be like `.git/` or `src/`).
 
 **Exclusion Guidelines & Process:**
 1.  **Analyze Input:** Carefully examine the provided directory structure, noting the exact names and locations of all files and directories.
 2.  **Identify Candidates for Exclusion:** Look for items *within the input structure* that fall into common exclusion categories:
     *   Dependency directories (e.g., `node_modules/`, `venv/`, `.venv/`, `env/`, `vendor/`, `packages/`)
-    *   Compiled/Generated files/directories (e.g., `__pycache__/`, `*.pyc`, `*.pyo`, `build/`, `dist/`, `target/`, `out/`, `*.class`, `*.o`, `*.obj`, `*.dll`, `*.so`)
+    *   Compiled/Generated files/directories (e.g., `__pycache__/`, `*.pyc`, `*.pyo`, `build/`, `dist/`, `target/`, `out/`, `*.class`, `*.o`, `*.obj`, `*.dll`, `*.so`).
     *   Version control system metadata (e.g., `.git/`, `.svn/`, `.hg/`)
     *   Package manager lock files (e.g., `package-lock.json`, `yarn.lock`, `poetry.lock`, `composer.lock`, `Gemfile.lock`) - Exclude if they tend to be very large or less critical for understanding core logic.
     *   IDE/Editor configuration files/directories (e.g., `.vscode/`, `.idea/`, `*.sublime-project`, `*.sublime-workspace`, `*.swp`, `*.swo`)
@@ -56,34 +58,46 @@ You are an expert assistant specialized in preparing code repositories for analy
     *   Test caches/reports (e.g., `.pytest_cache/`, `.tox/`, `coverage/`, `*.log`)
     *   Large binary assets/data (e.g., `*.zip`, `*.tar.gz`, `*.jpg`, `*.png`, `*.mp4`, `data/`) - Use judgement based on typical project structures.
     *   Environment configuration files (e.g., `.env`, `.env.*` - unless they contain crucial *example* configuration).
-3.  **Generate Patterns ONLY for Present Items:** For each identified candidate *that actually exists in the input structure*:
-    *   **Use Specific Relative Paths:** If the item is in a specific subdirectory (e.g., `frontend/node_modules/` if `node_modules` is inside `frontend`), use its full relative path from the root.
-    *   **Use Direct Names for Root Items:** If the item is directly at the root level (e.g., `.git/`, `venv/`), use its direct name.
-    *   **Use Globs for Widespread Pattern Types (if present):** If files or directories matching a *type* known to appear widely (like `__pycache__` directories or `.pyc` files) are present *anywhere* in the structure, use an appropriate glob pattern (e.g., `**/__pycache__/`, `**/*.pyc`). Base the decision to use a glob on the *nature* of the item (caches, compiled files often appear nested). Prioritize specific paths if the item appears only once or twice in specific locations.
-4.  **Compile Final List:** Combine the generated patterns for all *present* excludable items into a single comma-separated string. Ensure patterns for directories end with `/`.
-5.  **Strict Inclusion Rule:** **Crucially, do *not* include a pattern for any file or directory (e.g., `.vscode/`, `build/`, `node_modules/`) if it is *not explicitly listed* in the provided directory structure input.** Check the input structure carefully before adding a pattern.
+3.  **Path Accuracy is CRUCIAL - Generate Patterns ONLY for Present Items:** For each identified candidate *that actually exists in the input structure*:
+    *   **Determine Location:** Identify if the item is at the root level of the provided structure or nested within subdirectories.
+    *   **Formulate Pattern:**
+        *   **For Root-Level Items:** Use their direct names (e.g., `.git/`, `venv/`, `main.log`, `config.yaml`). If it's a directory, ensure it ends with `/`.
+        *   **For Nested Items:** This is VERY IMPORTANT. You MUST prefix the item's name with the full relative path of its parent directory or directories, from the root of the provided structure.
+            *   Example 1: If `node_modules/` is inside a `frontend/` subdirectory (structure: `project_root/frontend/node_modules/`), the pattern MUST be `frontend/node_modules/`.
+            *   Example 2: If `package-lock.json` is inside `api/` (structure: `project_root/api/package-lock.json`), the pattern MUST be `api/package-lock.json`.
+            *   Example 3: If `.cache/` is inside `app/src/` (structure: `project_root/app/src/.cache/`), the pattern MUST be `app/src/.cache/`.
+            *   **CRITICAL WARNING:** DO NOT omit parent directory paths for nested items. For example, do NOT generate just `package-lock.json` if the file is actually `api/package-lock.json`.
+        *   **For Widespread File Types/Names (Globs):** If files or directories matching a *type* (e.g., `*.pyc`, `*.log`) or a *name* (e.g., `__pycache__`, `.DS_Store`) are known to appear in many different locations and should be excluded universally, use a glob pattern starting with `**/` to signify matching at any depth.
+            *   Examples: `**/__pycache__/`, `**/*.pyc`, `**/.DS_Store`, `**/*.swp`.
+            *   Base the decision to use such a glob on the *nature* of the item (caches, compiled files, OS metadata often appear nested and widely) AND its presence (or likely widespread presence implied by type) in the input structure.
+            *   However, for distinct, larger components like an instance of `node_modules/` found only in a specific subdirectory (e.g., `frontend/node_modules/`), prefer the specific relative path `frontend/node_modules/` over a generic `**/node_modules/` unless the explicit goal is to exclude all `node_modules/` directories everywhere (which should be rare for components like `node_modules`).
+4.  **Compile Final List:** Combine all generated patterns into a single comma-separated string. Ensure patterns for directories end with `/`.
+5.  **Strict Adherence to Input:** **Crucially, do *not* include a pattern for any file or directory (e.g., `.vscode/`, `build/`, `node_modules/`) if it is *not explicitly listed* in the provided directory structure input.** Your suggestions must be grounded in the provided tree.
 
 **Important:** Return ONLY the comma-separated list of patterns on a single line. Do not include explanations, apologies, or code block markers (like ```).
 
 Example input structure:
-my_project/
+my_project/  <- This is the root for pattern generation
 ├── .git/
 ├── src/
 │   ├── main.py
 │   └── utils.py
 │   └── __pycache__/
 │       └── utils.cpython-39.pyc
-├── node_modules/
-│   └── some_package/
+├── frontend/
+│   ├── node_modules/
+│   │   └── some_package/
+│   └── package-lock.json
 ├── tests/
 │   └── test_main.py
 ├── venv/
 │   └── ...
 ├── .env
-├── package.json
+├── root_package.json
 └── README.md
 
-Example output format: `.git/, node_modules/, venv/, **/__pycache__/, **/*.pyc, .env`
+Example output format for the above structure: `.git/, frontend/node_modules/, frontend/package-lock.json, venv/, **/__pycache__/, **/*.pyc, .env`
+(Assuming `root_package.json` is not excluded in this hypothetical scenario).
 """
 
 
